@@ -187,11 +187,10 @@ ac_rule() {
 		$(for ip in ${LAN_AC_IP:1}; do echo "add ss_spec_lan_ac $ip"; done)
 	EOF
 	if [ -z "$Interface" ]; then
-		$IPT -I PREROUTING 1 -p tcp $EXT_ARGS $MATCH_SET -m comment --comment "$TAG" -j SS_SPEC_WAN_AC
+		$IPT -I prerouting_rule 1 -p tcp $EXT_ARGS $MATCH_SET -m comment --comment "$TAG" -j SS_SPEC_WAN_AC
 	else
 		for name in $Interface;do 
-		local IFNAME=$(uci -P /var/state get network.$name.ifname 2>/dev/null)
-		[ -n "$IFNAME" ] && $IPT -I PREROUTING 1 ${IFNAME:+-i $IFNAME} -p tcp $EXT_ARGS $MATCH_SET -m comment --comment "$TAG" -j SS_SPEC_WAN_AC
+			$IPT -I prerouting_${Interface}_rule 1 -p tcp $EXT_ARGS $MATCH_SET -m comment --comment "$TAG" -j SS_SPEC_WAN_AC
 		done
 	fi
 
@@ -302,7 +301,7 @@ gen_include() {
 	extract_rules() {
 		echo "*$1"
 		iptables-save -t $1 | grep SS_SPEC_ | \
-		sed -e "s/^-A \(OUTPUT\|PREROUTING\)/-I \1 1/"
+		sed -e "s/^-A \(OUTPUT\|prerouting_rule\)/-I \1 1/"
 		echo 'COMMIT'
 	}
 	cat <<-EOF >>$FWI
