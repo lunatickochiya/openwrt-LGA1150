@@ -129,6 +129,10 @@
 	};
 };
 
+&gmac0 {
+	phy-mode = "trgmii";
+};
+
 &switch0 {
 	ports {
 		port@1 {
@@ -149,6 +153,10 @@
 		port@4 {
 			status = "okay";
 			label = "wan";
+		};
+
+		port@6 {
+			phy-mode = "trgmii";
 		};
 	};
 };
