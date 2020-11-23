@@ -4,7 +4,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=qca-nss-dp
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://source.codeaurora.org/quic/cc-qrdk/oss/lklm/nss-dp
+PKG_SOURCE_URL:=https://source.codeaurora.cn/quic/cc-qrdk/oss/lklm/nss-dp
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=d861db22059ec41fad84ac711ebc7ae49c02b450
 

@@ -5,7 +5,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=qca-ssdk
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://source.codeaurora.org/quic/qsdk/oss/lklm/qca-ssdk
+PKG_SOURCE_URL:=https://source.codeaurora.cn/quic/qsdk/oss/lklm/qca-ssdk
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=73882ba1eeb9be030b2eac3d0594b984e2ce8126
 
