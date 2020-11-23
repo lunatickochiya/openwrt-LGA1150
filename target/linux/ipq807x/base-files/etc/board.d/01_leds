@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. /lib/functions/leds.sh
+. /lib/functions/uci-defaults.sh
+
+board=$(board_name)
+
+board_config_update
+
+case $board in
+xiaomi,ax3600)
+	ucidef_set_led_netdev "internet" "internet" "blue:internet" "pppoe-wan" "link"
+	ucidef_set_led_netdev "aiot" "AIoT WiFi" "blue:aiot" "wlan0" "link"
+	;;
+esac
+
+board_config_flush
+
+exit 0
