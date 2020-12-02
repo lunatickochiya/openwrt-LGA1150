@@ -69,7 +69,6 @@ config XRAY_EXCLUDE_ASSETS
 
 config XRAY_COMPRESS_UPX
 	bool "Compress executable files with UPX"
-	default y
 
 config XRAY_COMPATIBILITY_MODE
 	bool "V2ray Compatibility mode(v2ray soft connection Xray)"
