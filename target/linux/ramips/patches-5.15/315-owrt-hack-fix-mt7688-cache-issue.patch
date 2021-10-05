@@ -11,9 +11,9 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 --- a/arch/mips/kernel/setup.c
 +++ b/arch/mips/kernel/setup.c
 @@ -694,8 +694,6 @@ static void __init arch_mem_init(char **
- 	if (crashk_res.start != crashk_res.end)
- 		memblock_reserve(crashk_res.start, resource_size(&crashk_res));
- #endif
+ 	mips_reserve_vmcore();
+ 
+ 	mips_parse_crashkernel();
 -	device_tree_init();
 -
  	/*
