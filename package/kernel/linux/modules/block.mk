@@ -516,6 +516,7 @@ define KernelPackage/scsi-core
 	CONFIG_BLK_DEV_SD
   FILES:= \
 	$(LINUX_DIR)/drivers/scsi/scsi_mod.ko \
+	$(LINUX_DIR)/drivers/scsi/scsi_common.ko@ge5.15 \
 	$(LINUX_DIR)/drivers/scsi/sd_mod.ko
   AUTOLOAD:=$(call AutoLoad,40,scsi_mod sd_mod,1)
 endef
