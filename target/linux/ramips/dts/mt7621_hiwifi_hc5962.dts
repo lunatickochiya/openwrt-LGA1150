@@ -12,6 +12,7 @@
 		led-failsafe = &led_system;
 		led-running = &led_status;
 		led-upgrade = &led_status;
+		label-mac-device = &gmac0;
 	};
 
 	chosen {
@@ -96,7 +97,7 @@
 			reg = <0x540000 0x1c80000>;
 		};
 
-		partition@21c0000 {
+		bdinfo: partition@21c0000 {
 			label = "bdinfo";
 			reg = <0x21c0000 0x80000>;
 			read-only;
@@ -109,6 +110,16 @@
 	};
 };
 
+&bdinfo {
+	compatible = "nvmem-cells";
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	macaddr_bdinfo: macaddr@18a {
+		reg = <0x18a 0x11>;
+	};
+};
+
 &pcie {
 	status = "okay";
 };
@@ -118,6 +129,8 @@
 		reg = <0x0000 0 0 0 0>;
 		mediatek,mtd-eeprom = <&factory 0x0000>;
 		ieee80211-freq-limit = <2400000 2500000>;
+		nvmem-cells = <&macaddr_bdinfo>;
+		nvmem-cell-names = "mac-address";
 	};
 };
 
@@ -126,11 +139,16 @@
 		reg = <0x0000 0 0 0 0>;
 		mediatek,mtd-eeprom = <&factory 0x8000>;
 		ieee80211-freq-limit = <5000000 6000000>;
+		nvmem-cells = <&macaddr_bdinfo>;
+		nvmem-cell-names = "mac-address";
+		mac-address-increment = <2>;
 	};
 };
 
 &gmac0 {
 	phy-mode = "trgmii";
+	nvmem-cells = <&macaddr_bdinfo>;
+	nvmem-cell-names = "mac-address";
 };
 
 &switch0 {
@@ -153,6 +171,9 @@
 		port@4 {
 			status = "okay";
 			label = "wan";
+			nvmem-cells = <&macaddr_bdinfo>;
+			nvmem-cell-names = "mac-address";
+			mac-address-increment = <1>;
 		};
 
 		port@6 {
