@@ -223,7 +223,7 @@
 	status = "okay";
 };
 
-&gmac0 {
+&gmac {
 	vlan_tag = <0 0x3f>;
 };
 
