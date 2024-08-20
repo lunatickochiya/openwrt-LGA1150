@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ls-dpl
-PKG_VERSION:=LSDK-21.08
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=10.38.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://source.codeaurora.org/external/qoriq/qoriq-components/mc-utils
-PKG_SOURCE_VERSION:=LSDK-21.08
-PKG_MIRROR_HASH:=56ea7db52c1bee43c2823cff0cabc64d76b24296dfa347c9a95bc4a9542d4ed8
+PKG_SOURCE_URL:=https://github.com/nxp-qoriq/mc-utils
+PKG_SOURCE_VERSION:=mc_release_10.38.0
+PKG_MIRROR_HASH:=9ada83ac4cc259cdf2ea2ebfc2328292f7dace701bfac2b5514749bd9f8315f0
 
 PKG_FLAGS:=nonshared
 

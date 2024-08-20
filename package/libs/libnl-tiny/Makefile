@@ -12,9 +12,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=$(PROJECT_GIT)/project/libnl-tiny.git
-PKG_SOURCE_DATE:=2021-11-21
-PKG_SOURCE_VERSION:=8e0555fb39f51a5d6436b4f1370850caa03611ea
-PKG_MIRROR_HASH:=2cfbcc62384535674a2c0157cb24a0736520fcb66ed50be23bf9141c8488885f
+PKG_SOURCE_DATE:=2023-12-05
+PKG_SOURCE_VERSION:=965c4bf49658342ced0bd6e7cb069571b4a1ddff
+PKG_MIRROR_HASH:=4b56499e71f5f10b123e1c7ee13dbfcd970de560bff8d16ab39dc25c9ff743cb
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=LGPL-2.1
@@ -37,13 +37,13 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig $(1)/usr/include/libnl-tiny
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnl-tiny/* $(1)/usr/include/libnl-tiny
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libnl-tiny.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnl-tiny.so* $(1)/usr/lib/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libnl-tiny.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/libnl-tiny/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libnl-tiny.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnl-tiny.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libnl-tiny))

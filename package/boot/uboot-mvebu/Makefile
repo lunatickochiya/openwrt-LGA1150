@@ -8,10 +8,10 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_VERSION:=2021.10
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2024.04
+PKG_RELEASE:=1
 
-PKG_HASH:=cde723e19262e646f2670d25e5ec4b1b368490de950d4e26275a988c36df0bd4
+PKG_HASH:=18a853fe39fad7ad03a90cc2d4275aeaed6da69735defac3492b80508843dd4a
 
 include $(INCLUDE_DIR)/u-boot.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,14 +26,22 @@ define U-Boot/clearfog
   NAME:=SolidRun ClearFog A1
   BUILD_DEVICES:=solidrun_clearfog-base-a1 solidrun_clearfog-pro-a1
   BUILD_SUBTARGET:=cortexa9
-  UBOOT_IMAGE:=u-boot-spl.kwb
+  UBOOT_IMAGE:=u-boot-with-spl.kwb
 endef
 
 define U-Boot/helios4
   NAME:=Kobol Helios 4
   BUILD_DEVICES:=kobol_helios4
   BUILD_SUBTARGET:=cortexa9
-  UBOOT_IMAGE:=u-boot-spl.kwb
+  UBOOT_IMAGE:=u-boot-with-spl.kwb
+endef
+
+define U-Boot/omnia
+  NAME:=Turris Omnia
+  BUILD_DEVICES:=cznic_turris-omnia
+  BUILD_SUBTARGET:=cortexa9
+  UBOOT_CONFIG:=turris_omnia
+  UBOOT_IMAGE:=u-boot-with-spl.kwb
 endef
 
 define U-Boot/espressobin
@@ -47,18 +55,27 @@ define U-Boot/uDPU
   BUILD_SUBTARGET:=cortexa53
 endef
 
+define U-Boot/eDPU
+  NAME:=Methode eDPU
+  BUILD_SUBTARGET:=cortexa53
+endef
+
+define U-Boot/rb5009
+  NAME:=MikroTik RB5009
+  BUILD_SUBTARGET:=cortexa72
+  BUILD_DEVICES:=mikrotik_rb5009
+  UBOOT_CONFIG:=mvebu_rb5009
+  UBOOT_IMAGE:=u-boot.elf
+endef
+
 UBOOT_TARGETS:= \
 	clearfog \
 	helios4 \
+	omnia \
 	espressobin \
-	uDPU
-
-define Build/Configure
-	# enable additional options beyond <device>_defconfig
-	echo CONFIG_CMD_SETEXPR=y >> $(PKG_BUILD_DIR)/configs/$(UBOOT_CONFIG)_defconfig
-
-	$(call Build/Configure/U-Boot)
-endef
+	uDPU \
+	eDPU \
+	rb5009
 
 define Package/u-boot/install
 	$(if $(findstring cortexa53,$(BUILD_SUBTARGET)),,$(Package/u-boot/install/default))

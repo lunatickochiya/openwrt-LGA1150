@@ -10,10 +10,33 @@ VIDEO_MENU:=Video Support
 
 V4L2_DIR=v4l2-core
 V4L2_USB_DIR=usb
+V4L2_MEM2MEM_DIR=platform
 
 #
 # Video Display
 #
+
+define KernelPackage/acpi-video
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=ACPI Extensions For Display Adapters
+  DEPENDS:=@TARGET_x86||TARGET_loongarch64 +kmod-backlight
+  HIDDEN:=1
+  KCONFIG:=CONFIG_ACPI_VIDEO
+  FILES:=$(LINUX_DIR)/drivers/acpi/video.ko
+  AUTOLOAD:=$(call AutoProbe,video)
+endef
+
+define KernelPackage/acpi-video/description
+  Kernel support for integrated graphics devices.
+endef
+
+define KernelPackage/acpi-video/x86
+  KCONFIG+=CONFIG_ACPI_WMI
+  FILES+=$(LINUX_DIR)/drivers/platform/x86/wmi.ko
+  AUTOLOAD:=$(call AutoProbe,wmi video)
+endef
+
+$(eval $(call KernelPackage,acpi-video))
 
 define KernelPackage/backlight
 	SUBMENU:=$(VIDEO_MENU)
@@ -60,6 +83,7 @@ define KernelPackage/fb
   DEPENDS:=@DISPLAY_SUPPORT
   KCONFIG:= \
 	CONFIG_FB \
+	CONFIG_FB_DEVICE=y \
 	CONFIG_FB_MXS=n \
 	CONFIG_FB_SM750=n \
 	CONFIG_FRAMEBUFFER_CONSOLE=y \
@@ -82,7 +106,8 @@ define KernelPackage/fb
 	CONFIG_VT_CONSOLE=y \
 	CONFIG_VT_HW_CONSOLE_BINDING=y
   FILES:=$(LINUX_DIR)/drivers/video/fbdev/core/fb.ko \
-	$(LINUX_DIR)/lib/fonts/font.ko
+	$(LINUX_DIR)/lib/fonts/font.ko \
+	$(LINUX_DIR)/drivers/video/fbdev/core/fb_io_fops.ko@ge6.6
   AUTOLOAD:=$(call AutoLoad,06,fb font)
 endef
 
@@ -225,7 +250,8 @@ define KernelPackage/drm
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=Direct Rendering Manager (DRM) support
   HIDDEN:=1
-  DEPENDS:=+kmod-dma-buf +kmod-i2c-core +PACKAGE_kmod-backlight:kmod-backlight
+  DEPENDS:=+kmod-dma-buf +kmod-i2c-core +PACKAGE_kmod-backlight:kmod-backlight \
+	+kmod-fb
   KCONFIG:=CONFIG_DRM
   FILES:= \
 	$(LINUX_DIR)/drivers/gpu/drm/drm.ko \
@@ -238,6 +264,52 @@ define KernelPackage/drm/description
 endef
 
 $(eval $(call KernelPackage,drm))
+
+define KernelPackage/drm-buddy
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=A page based buddy allocator
+  DEPENDS:=@DISPLAY_SUPPORT +kmod-drm @LINUX_6_1||LINUX_6_6
+  KCONFIG:=CONFIG_DRM_BUDDY
+  FILES:= $(LINUX_DIR)/drivers/gpu/drm/drm_buddy.ko
+  AUTOLOAD:=$(call AutoProbe,drm_buddy)
+endef
+
+define KernelPackage/drm-buddy/description
+  A page based buddy allocator
+endef
+
+$(eval $(call KernelPackage,drm-buddy))
+
+define KernelPackage/drm-display-helper
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=DRM helpers for display adapters drivers
+  DEPENDS:=@DISPLAY_SUPPORT +kmod-drm-kms-helper @LINUX_6_1||LINUX_6_6
+  KCONFIG:=CONFIG_DRM_DISPLAY_HELPER
+  FILES:=$(LINUX_DIR)/drivers/gpu/drm/display/drm_display_helper.ko
+  AUTOLOAD:=$(call AutoProbe,drm_display_helper)
+endef
+
+define KernelPackage/drm-display-helper/description
+  DRM helpers for display adapters drivers.
+endef
+
+$(eval $(call KernelPackage,drm-display-helper))
+
+define KernelPackage/drm-exec
+  SUBMENU:=$(VIDEO_MENU)
+  HIDDEN:=1
+  TITLE:=Execution context for command submissions
+  DEPENDS:=@DISPLAY_SUPPORT +kmod-drm @LINUX_6_6
+  KCONFIG:=CONFIG_DRM_EXEC
+  FILES:=$(LINUX_DIR)/drivers/gpu/drm/drm_exec.ko
+  AUTOLOAD:=$(call AutoProbe,drm_exec)
+endef
+
+define KernelPackage/drm-exec/description
+  Execution context for command submissions.
+endef
+
+$(eval $(call KernelPackage,drm-exec))
 
 define KernelPackage/drm-ttm
   SUBMENU:=$(VIDEO_MENU)
@@ -254,6 +326,20 @@ define KernelPackage/drm-ttm/description
 endef
 
 $(eval $(call KernelPackage,drm-ttm))
+
+
+define KernelPackage/drm-ttm-helper
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=Helpers for ttm-based gem objects
+  HIDDEN:=1
+  DEPENDS:=@DISPLAY_SUPPORT +kmod-drm-ttm
+  KCONFIG:=CONFIG_DRM_TTM_HELPER
+  FILES:=$(LINUX_DIR)/drivers/gpu/drm/drm_ttm_helper.ko
+  AUTOLOAD:=$(call AutoProbe,drm_ttm_helper)
+endef
+
+$(eval $(call KernelPackage,drm-ttm-helper))
+
 
 define KernelPackage/drm-kms-helper
   SUBMENU:=$(VIDEO_MENU)
@@ -273,23 +359,49 @@ endef
 
 $(eval $(call KernelPackage,drm-kms-helper))
 
+define KernelPackage/drm-suballoc-helper
+  SUBMENU:=$(VIDEO_MENU)
+  HIDDEN:=1
+  TITLE:=DRM suballocation helper
+  DEPENDS:=@DISPLAY_SUPPORT +kmod-drm @LINUX_6_6
+  KCONFIG:=CONFIG_DRM_SUBALLOC_HELPER
+  FILES:=$(LINUX_DIR)/drivers/gpu/drm/drm_suballoc_helper.ko
+  AUTOLOAD:=$(call AutoProbe,drm_suballoc_helper)
+endef
+
+define KernelPackage/drm-suballoc-helper/description
+  DRM suballocation helper.
+endef
+
+$(eval $(call KernelPackage,drm-suballoc-helper))
+
 define KernelPackage/drm-amdgpu
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=AMDGPU DRM support
-  DEPENDS:=@TARGET_x86 @DISPLAY_SUPPORT +kmod-backlight +kmod-drm-ttm \
-	+kmod-drm-kms-helper +kmod-i2c-algo-bit +amdgpu-firmware
+  DEPENDS:=@TARGET_x86||TARGET_loongarch64 @DISPLAY_SUPPORT +kmod-backlight +kmod-drm-ttm \
+	+kmod-drm-ttm-helper +kmod-drm-kms-helper +kmod-i2c-algo-bit +amdgpu-firmware \
+	+kmod-drm-display-helper +kmod-drm-buddy +kmod-acpi-video \
+	+LINUX_6_6:kmod-drm-exec +LINUX_6_6:kmod-drm-suballoc-helper
   KCONFIG:=CONFIG_DRM_AMDGPU \
 	CONFIG_DRM_AMDGPU_SI=y \
 	CONFIG_DRM_AMDGPU_CIK=y \
 	CONFIG_DRM_AMD_DC=y \
 	CONFIG_DEBUG_KERNEL_DC=n
   FILES:=$(LINUX_DIR)/drivers/gpu/drm/amd/amdgpu/amdgpu.ko \
-	$(LINUX_DIR)/drivers/gpu/drm/scheduler/gpu-sched.ko
+	$(LINUX_DIR)/drivers/gpu/drm/scheduler/gpu-sched.ko \
+	$(LINUX_DIR)/drivers/gpu/drm/amd/amdxcp/amdxcp.ko@ge6.5
   AUTOLOAD:=$(call AutoProbe,amdgpu)
 endef
 
 define KernelPackage/drm-amdgpu/description
   Direct Rendering Manager (DRM) support for AMDGPU Cards
+endef
+
+define KernelPackage/drm-amdgpu/loongarch64
+  KCONFIG+=CONFIG_DRM_AMDGPU_USERPTR=y \
+	CONFIG_DRM_AMD_DC=y \
+	CONFIG_DRM_AMD_DC_FP=y \
+	CONFIG_DRM_AMD_DC_SI=y
 endef
 
 $(eval $(call KernelPackage,drm-amdgpu))
@@ -314,7 +426,9 @@ define KernelPackage/drm-imx
 	CONFIG_DRM_IMX_LDB=n \
 	CONFIG_DRM_IMX_HDMI=n
   FILES:= \
-	$(LINUX_DIR)/drivers/gpu/drm/imx/imxdrm.ko \
+	$(LINUX_DIR)/drivers/gpu/drm/imx/imxdrm.ko@lt6.6 \
+	$(LINUX_DIR)/drivers/gpu/drm/imx/ipuv3/imxdrm.ko@ge6.6 \
+	$(LINUX_DIR)/drivers/gpu/drm/drm_dma_helper.ko@ge6.1 \
 	$(LINUX_DIR)/drivers/gpu/ipu-v3/imx-ipu-v3.ko
   AUTOLOAD:=$(call AutoLoad,08,imxdrm imx-ipu-v3 imx-ipuv3-crtc)
 endef
@@ -328,14 +442,15 @@ $(eval $(call KernelPackage,drm-imx))
 define KernelPackage/drm-imx-hdmi
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=Freescale i.MX HDMI DRM support
-  DEPENDS:=+kmod-sound-core kmod-drm-imx
+  DEPENDS:=+kmod-sound-core kmod-drm-imx kmod-drm-display-helper
   KCONFIG:=CONFIG_DRM_IMX_HDMI \
 	CONFIG_DRM_DW_HDMI_AHB_AUDIO \
 	CONFIG_DRM_DW_HDMI_I2S_AUDIO
   FILES:= \
 	$(LINUX_DIR)/drivers/gpu/drm/bridge/synopsys/dw-hdmi.ko \
 	$(LINUX_DIR)/drivers/gpu/drm/bridge/synopsys/dw-hdmi-ahb-audio.ko \
-	$(LINUX_DIR)/drivers/gpu/drm/imx/dw_hdmi-imx.ko
+	$(LINUX_DIR)/drivers/gpu/drm/imx/dw_hdmi-imx.ko@lt6.6 \
+	$(LINUX_DIR)/drivers/gpu/drm/imx/ipuv3/dw_hdmi-imx.ko@ge6.6
   AUTOLOAD:=$(call AutoLoad,08,dw-hdmi dw-hdmi-ahb-audio.ko dw_hdmi-imx)
 endef
 
@@ -348,7 +463,7 @@ $(eval $(call KernelPackage,drm-imx-hdmi))
 define KernelPackage/drm-imx-ldb
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=Freescale i.MX LVDS DRM support
-  DEPENDS:=+kmod-backlight kmod-drm-imx
+  DEPENDS:=@(TARGET_imx&&TARGET_imx_cortexa9) +kmod-backlight kmod-drm-imx
   KCONFIG:=CONFIG_DRM_IMX_LDB \
 	CONFIG_DRM_PANEL_SIMPLE \
 	CONFIG_DRM_PANEL=y \
@@ -359,8 +474,10 @@ define KernelPackage/drm-imx-ldb
 	CONFIG_DRM_PANEL_LVDS=n \
 	CONFIG_DRM_PANEL_S6E8AA0=n \
 	CONFIG_DRM_PANEL_SITRONIX_ST7789V=n
-  FILES:=$(LINUX_DIR)/drivers/gpu/drm/imx/imx-ldb.ko \
-	$(LINUX_DIR)/drivers/gpu/drm/panel/panel-simple.ko
+  FILES:=$(LINUX_DIR)/drivers/gpu/drm/imx/imx-ldb.ko@lt6.6 \
+	$(LINUX_DIR)/drivers/gpu/drm/imx/ipuv3/imx-ldb.ko@ge6.6 \
+	$(LINUX_DIR)/drivers/gpu/drm/panel/panel-simple.ko \
+	$(LINUX_DIR)/drivers/gpu/drm/drm_dp_aux_bus.ko@lt6.1
   AUTOLOAD:=$(call AutoLoad,08,imx-ldb)
 endef
 
@@ -374,7 +491,8 @@ define KernelPackage/drm-radeon
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=Radeon DRM support
   DEPENDS:=@TARGET_x86 @DISPLAY_SUPPORT +kmod-backlight +kmod-drm-kms-helper \
-	+kmod-drm-ttm +kmod-i2c-algo-bit +radeon-firmware
+	+kmod-drm-ttm +kmod-drm-ttm-helper +kmod-i2c-algo-bit +radeon-firmware \
+	+kmod-drm-display-helper +kmod-acpi-video +LINUX_6_6:kmod-drm-suballoc-helper
   KCONFIG:=CONFIG_DRM_RADEON
   FILES:=$(LINUX_DIR)/drivers/gpu/drm/radeon/radeon.ko
   AUTOLOAD:=$(call AutoProbe,radeon)
@@ -398,10 +516,11 @@ define KernelPackage/video-core
 	CONFIG_MEDIA_SUPPORT \
 	CONFIG_MEDIA_CAMERA_SUPPORT=y \
 	CONFIG_VIDEO_DEV \
-	CONFIG_V4L_PLATFORM_DRIVERS=y
+	CONFIG_V4L_PLATFORM_DRIVERS=y \
+	CONFIG_MEDIA_PLATFORM_DRIVERS=y@ge6.1
   FILES:= \
 	$(LINUX_DIR)/drivers/media/$(V4L2_DIR)/videodev.ko
-  AUTOLOAD:=$(call AutoLoad,60, videodev v4l2-common)
+  AUTOLOAD:=$(call AutoLoad,60,videodev)
 endef
 
 define KernelPackage/video-core/description
@@ -422,6 +541,10 @@ $(AddDepends/video)
 	 CONFIG_MEDIA_CAMERA_SUPPORT=y
 endef
 
+define AddDepends/framegrabber
+$(AddDepends/video)
+  KCONFIG+=CONFIG_MEDIA_PCI_SUPPORT=y
+endef
 
 define KernelPackage/video-videobuf2
   TITLE:=videobuf2 lib
@@ -429,6 +552,7 @@ define KernelPackage/video-videobuf2
   KCONFIG:= \
 	CONFIG_VIDEOBUF2_CORE \
 	CONFIG_VIDEOBUF2_MEMOPS \
+	CONFIG_VIDEOBUF2_V4L2 \
 	CONFIG_VIDEOBUF2_VMALLOC
   FILES:= \
 	$(LINUX_DIR)/drivers/media/common/videobuf2/videobuf2-common.ko \
@@ -448,7 +572,7 @@ $(eval $(call KernelPackage,video-videobuf2))
 
 define KernelPackage/video-cpia2
   TITLE:=CPIA2 video driver
-  DEPENDS:=@USB_SUPPORT +kmod-usb-core
+  DEPENDS:=@USB_SUPPORT +kmod-usb-core @LINUX_5_15
   KCONFIG:=CONFIG_VIDEO_CPIA2
   FILES:=$(LINUX_DIR)/drivers/media/$(V4L2_USB_DIR)/cpia2/cpia2.ko
   AUTOLOAD:=$(call AutoProbe,cpia2)
@@ -483,9 +607,10 @@ $(eval $(call KernelPackage,video-pwc))
 define KernelPackage/video-uvc
   TITLE:=USB Video Class (UVC) support
   DEPENDS:=@USB_SUPPORT +kmod-usb-core +kmod-video-videobuf2 +kmod-input-core
-  KCONFIG:= CONFIG_USB_VIDEO_CLASS
-  FILES:=$(LINUX_DIR)/drivers/media/$(V4L2_USB_DIR)/uvc/uvcvideo.ko
-  AUTOLOAD:=$(call AutoProbe,uvcvideo)
+  KCONFIG:= CONFIG_USB_VIDEO_CLASS CONFIG_UVC_COMMON@ge6.3
+  FILES:=$(LINUX_DIR)/drivers/media/$(V4L2_USB_DIR)/uvc/uvcvideo.ko \
+	$(LINUX_DIR)/drivers/media/common/uvc.ko@ge6.3
+  AUTOLOAD:=$(call AutoProbe,uvc@ge6.3 uvcvideo)
   $(call AddDepends/camera)
 endef
 
@@ -653,6 +778,21 @@ define KernelPackage/video-gspca-pac207/description
 endef
 
 $(eval $(call KernelPackage,video-gspca-pac207))
+
+
+define KernelPackage/video-gspca-pac7302
+  TITLE:=pac7302 webcam support
+  KCONFIG:=CONFIG_USB_GSPCA_PAC7302
+  FILES:=$(LINUX_DIR)/drivers/media/$(V4L2_USB_DIR)/gspca/gspca_pac7302.ko
+  AUTOLOAD:=$(call AutoProbe,gspca_pac7302)
+  $(call AddDepends/camera-gspca)
+endef
+
+define KernelPackage/video-gspca-pac7302/description
+ The Pixart PAC7302 USB Camera Driver (pac7302) kernel module
+endef
+
+$(eval $(call KernelPackage,video-gspca-pac7302))
 
 
 define KernelPackage/video-gspca-pac7311
@@ -1028,3 +1168,117 @@ define KernelPackage/video-gspca-konica/description
 endef
 
 $(eval $(call KernelPackage,video-gspca-konica))
+
+#
+# Video Processing
+#
+
+define KernelPackage/video-mem2mem
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=Memory 2 Memory device support
+  HIDDEN:=1
+  DEPENDS:=+kmod-video-videobuf2
+  KCONFIG:= \
+    CONFIG_V4L_MEM2MEM_DRIVERS=y \
+    CONFIG_V4L2_MEM2MEM_DEV
+  FILES:= $(LINUX_DIR)/drivers/media/$(V4L2_DIR)/v4l2-mem2mem.ko
+  AUTOLOAD:=$(call AutoLoad,66,v4l2-mem2mem)
+  $(call AddDepends/video)
+endef
+
+define KernelPackage/video-mem2mem/description
+  Memory 2 memory device support
+endef
+
+$(eval $(call KernelPackage,video-mem2mem))
+
+define KernelPackage/video-dma-contig
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=Video DMA support
+  HIDDEN:=1
+  DEPENDS:=+kmod-video-videobuf2
+  KCONFIG:=CONFIG_VIDEOBUF2_DMA_CONTIG
+  FILES:=$(LINUX_DIR)/drivers/media/common/videobuf2/videobuf2-dma-contig.ko
+  AUTOLOAD:=$(call AutoLoad,66,videobuf2-dma-contig)
+  $(call AddDepends/video)
+endef
+
+define KernelPackage/video-dma-contig/description
+  Video DMA support Contig
+endef
+
+
+$(eval $(call KernelPackage,video-dma-contig))
+
+define KernelPackage/video-dma-sg
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=Video DMA support
+  HIDDEN:=1
+  DEPENDS:=+kmod-video-videobuf2
+  KCONFIG:=CONFIG_VIDEOBUF2_DMA_SG
+  FILES:=$(LINUX_DIR)/drivers/media/common/videobuf2/videobuf2-dma-sg.ko
+  AUTOLOAD:=$(call AutoLoad,66,videobuf2-dma-sg)
+  $(call AddDepends/video)
+endef
+
+define KernelPackage/video-dma-sg/description
+  Video DMA support SG
+endef
+
+$(eval $(call KernelPackage,video-dma-sg))
+
+define KernelPackage/video-coda
+  TITLE:=i.MX VPU support
+  DEPENDS:=@(TARGET_imx&&TARGET_imx_cortexa9) +kmod-video-mem2mem +kmod-video-dma-contig
+  KCONFIG:= \
+  	CONFIG_VIDEO_CODA \
+  	CONFIG_VIDEO_IMX_VDOA
+  FILES:= \
+  	$(LINUX_DIR)/drivers/media/$(V4L2_MEM2MEM_DIR)/coda/coda-vpu.ko@lt6.1 \
+  	$(LINUX_DIR)/drivers/media/$(V4L2_MEM2MEM_DIR)/chips-media/coda-vpu.ko@ge6.1 \
+  	$(LINUX_DIR)/drivers/media/$(V4L2_MEM2MEM_DIR)/coda/imx-vdoa.ko@lt6.1 \
+  	$(LINUX_DIR)/drivers/media/$(V4L2_MEM2MEM_DIR)/chips-media/imx-vdoa.ko@ge6.1 \
+ 	$(LINUX_DIR)/drivers/media/$(V4L2_DIR)/v4l2-jpeg.ko
+  AUTOLOAD:=$(call AutoProbe,coda-vpu imx-vdoa v4l2-jpeg)
+  $(call AddDepends/video)
+endef
+
+define KernelPackage/video-coda/description
+ The i.MX Video Processing Unit (VPU) kernel module
+endef
+
+$(eval $(call KernelPackage,video-coda))
+
+define KernelPackage/video-pxp
+  TITLE:=i.MX PXP support
+  DEPENDS:=@TARGET_imx +kmod-video-mem2mem +kmod-video-dma-contig
+  KCONFIG:= CONFIG_VIDEO_IMX_PXP
+  FILES:= $(LINUX_DIR)/drivers/media/$(V4L2_MEM2MEM_DIR)/imx-pxp.ko@lt6.1 \
+	$(LINUX_DIR)/drivers/media/platform/nxp/imx-pxp.ko@ge6.1
+  AUTOLOAD:=$(call AutoProbe,imx-pxp)
+  $(call AddDepends/video)
+endef
+
+define KernelPackage/video-pxp/description
+ The i.MX Pixel Pipeline (PXP) kernel module
+ This enables hardware accelerated support for image
+ Colour Conversion, Scaling and Rotation
+endef
+
+$(eval $(call KernelPackage,video-pxp))
+
+define KernelPackage/video-tw686x
+  TITLE:=TW686x support
+  DEPENDS:=@PCIE_SUPPORT +kmod-video-dma-contig +kmod-video-dma-sg +kmod-sound-core
+  KCONFIG:= CONFIG_VIDEO_TW686X
+  FILES:= $(LINUX_DIR)/drivers/media/pci/tw686x/tw686x.ko
+  AUTOLOAD:=$(call AutoProbe,tw686x)
+  MODPARAMS.tw686x:=dma_mode=contig
+  $(call AddDepends/framegrabber)
+endef
+
+define KernelPackage/video-tw686x/description
+ The Intersil/Techwell TW686x kernel module
+endef
+
+$(eval $(call KernelPackage,video-tw686x))

@@ -51,7 +51,7 @@
 
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio 9 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpio 9 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-boot-on;
 		regulator-always-on;
@@ -64,6 +64,10 @@
 		label = "firmware";
 		reg = <0x040000 0xfc0000>;
 	};
+};
+
+&ethernet {
+	pinctrl-0 = <&mdio_pins>, <&rgmii1_pins>;
 };
 
 &switch0 {

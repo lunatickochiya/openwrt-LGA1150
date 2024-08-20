@@ -5,13 +5,15 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=$(PROJECT_GIT)/project/netifd.git
-PKG_SOURCE_DATE:=2022-01-22
-PKG_SOURCE_VERSION:=ed7187684685430ee6de49e551775badbee39761
-PKG_MIRROR_HASH:=f26e968c79e61b1a4495b29f51e4adfb2238ede16c0d7349cce38ac009b72969
+PKG_SOURCE_DATE:=2024-08-01
+PKG_SOURCE_VERSION:=68c8a4f94cd3cfd654a52cbc8b57c5c9d99640dd
+PKG_MIRROR_HASH:=897481d6d4309b4a940b80cfe2392a0c0ccbef4d0024cb1a995b1f4780b69cde
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=
+
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -19,7 +21,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/netifd
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=+libuci +libnl-tiny +libubus +ubus +ubusd +jshn +libubox
+  DEPENDS:=+libuci +libnl-tiny +libubus +ubus +ubusd +jshn +libubox +libudebug +ucode +ucode-mod-fs
   TITLE:=OpenWrt Network Interface Configuration Daemon
 endef
 
@@ -30,10 +32,7 @@ endef
 
 TARGET_CFLAGS += \
 	-I$(STAGING_DIR)/usr/include/libnl-tiny \
-	-I$(STAGING_DIR)/usr/include \
-	-flto
-
-TARGET_LDFLAGS += -flto -fuse-linker-plugin
+	-I$(STAGING_DIR)/usr/include
 
 CMAKE_OPTIONS += \
 	-DLIBNL_LIBS=-lnl-tiny \
@@ -44,7 +43,10 @@ define Package/netifd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/netifd $(1)/sbin/
 	$(CP) ./files/* $(1)/
 	$(INSTALL_DIR) $(1)/etc/udhcpc.user.d/
-	$(CP) $(PKG_BUILD_DIR)/scripts/* $(1)/lib/netifd/
+	$(CP) \
+		$(PKG_BUILD_DIR)/scripts/utils.sh \
+		$(PKG_BUILD_DIR)/scripts/netifd-proto.sh \
+		$(1)/lib/netifd/
 endef
 
 $(eval $(call BuildPackage,netifd))

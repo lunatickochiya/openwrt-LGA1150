@@ -25,6 +25,35 @@ Once this is done. Retry.
 EOF
 		return 1
 		;;
+	zte,mf18a |\
+	zte,mf282plus|\
+	zte,mf286d |\
+	zte,mf287|\
+	zte,mf287plus |\
+	zte,mf287pro |\
+	zte,mf289f)
+		CI_UBIPART="rootfs"
+		local mtdnum="$( find_mtd_index $CI_UBIPART )"
+		[ ! "$mtdnum" ] && return 1
+		ubiattach -m "$mtdnum" || true
+		local ubidev="$( nand_find_ubi $CI_UBIPART )"
+		local ubi_rootfs=$(nand_find_volume $ubidev ubi_rootfs)
+		local ubi_rootfs_data=$(nand_find_volume $ubidev ubi_rootfs_data)
+
+		[ -n "$ubi_rootfs" ] || [ -n "$ubi_rootfs_data" ] || return 0
+
+		cat << EOF
+ubi_rootfs partition is still present.
+
+You need to delete the stock partition first:
+# ubirmvol /dev/ubi0 -N ubi_rootfs
+Please also delete ubi_rootfs_data, if exist:
+# ubirmvol /dev/ubi0 -N ubi_rootfs_data
+
+Once this is done. Retry.
+EOF
+		return 1
+		;;
 	esac
 	return 0;
 }
@@ -87,13 +116,16 @@ platform_do_upgrade() {
 	edgecore,ecw5211 |\
 	edgecore,oap100 |\
 	engenius,eap2200 |\
+	glinet,gl-a1300 |\
 	glinet,gl-ap1300 |\
 	luma,wrtq-329acn |\
 	mobipromo,cm520-79f |\
+	netgear,lbr20 |\
 	netgear,wac510 |\
 	p2w,r619ac-64m |\
 	p2w,r619ac-128m |\
-	qxwlan,e2600ac-c2)
+	qxwlan,e2600ac-c2 |\
+	wallys,dr40x9)
 		nand_do_upgrade "$1"
 		;;
 	glinet,gl-b2200)
@@ -129,25 +161,44 @@ platform_do_upgrade() {
 	compex,wpj419)
 		nand_do_upgrade "$1"
 		;;
+	google,wifi)
+		export_bootdevice
+		export_partdevice CI_ROOTDEV 0
+		CI_KERNPART="kernel"
+		CI_ROOTPART="rootfs"
+		emmc_do_upgrade "$1"
+		;;
 	linksys,ea6350v3 |\
 	linksys,ea8300 |\
-	linksys,mr8300)
+	linksys,mr8300 |\
+	linksys,whw01 |\
+	linksys,whw03v2)
 		platform_do_upgrade_linksys "$1"
 		;;
-	meraki,mr33)
+	linksys,whw03)
+		platform_do_upgrade_linksys_emmc "$1"
+		;;
+	meraki,mr33 |\
+	meraki,mr74)
 		CI_KERNPART="part.safe"
 		nand_do_upgrade "$1"
 		;;
 	mikrotik,cap-ac|\
 	mikrotik,hap-ac2|\
+	mikrotik,hap-ac3-lte6-kit|\
 	mikrotik,lhgg-60ad|\
-	mikrotik,sxtsq-5-ac)
+	mikrotik,sxtsq-5-ac|\
+	mikrotik,wap-ac|\
+	mikrotik,wap-ac-lte|\
+	mikrotik,wap-r-ac)
 		[ "$(rootfs_type)" = "tmpfs" ] && mtd erase firmware
 		default_do_upgrade "$1"
 		;;
 	mikrotik,hap-ac3)
 		platform_do_upgrade_mikrotik_nand "$1"
 		;;
+	netgear,rbr40|\
+	netgear,rbs40|\
 	netgear,rbr50 |\
 	netgear,rbs50 |\
 	netgear,srr60 |\
@@ -161,7 +212,18 @@ platform_do_upgrade() {
 		PART_NAME="inactive"
 		platform_do_upgrade_dualboot_datachk "$1"
 		;;
-	teltonika,rutx10)
+	sony,ncp-hg100-cellular)
+		sony_emmc_do_upgrade "$1"
+		;;
+	teltonika,rutx10 |\
+	teltonika,rutx50 |\
+	zte,mf18a |\
+	zte,mf282plus |\
+	zte,mf286d |\
+	zte,mf287 |\
+	zte,mf287plus |\
+	zte,mf287pro |\
+	zte,mf289f)
 		CI_UBIPART="rootfs"
 		nand_do_upgrade "$1"
 		;;
@@ -176,7 +238,9 @@ platform_do_upgrade() {
 
 platform_copy_config() {
 	case "$(board_name)" in
-	glinet,gl-b2200)
+	glinet,gl-b2200 |\
+	google,wifi |\
+	linksys,whw03)
 		emmc_copy_config
 		;;
 	esac

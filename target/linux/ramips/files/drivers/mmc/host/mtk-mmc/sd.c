@@ -39,6 +39,7 @@
 #include <linux/spinlock.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
+#include <linux/of.h>
 
 #include <linux/mmc/host.h>
 #include <linux/mmc/mmc.h>
@@ -2244,7 +2245,7 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	//TODO: read this as bus-width from dt (via mmc_of_parse)
 	mmc->caps  |= MMC_CAP_4_BIT_DATA;
 
-	cd_active_low = !of_property_read_bool(pdev->dev.of_node, "mediatek,cd-high");
+	cd_active_low = !of_property_read_bool(pdev->dev.of_node, "cd-inverted");
 
 	if (of_property_read_bool(pdev->dev.of_node, "mediatek,cd-poll"))
 		mmc->caps |= MMC_CAP_NEEDS_POLL;

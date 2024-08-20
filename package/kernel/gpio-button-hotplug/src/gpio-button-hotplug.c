@@ -100,6 +100,7 @@ static struct bh_map button_map[] = {
 	BH_MAP(KEY_WIMAX,		"wwan"),
 	BH_MAP(KEY_WLAN,		"wlan"),
 	BH_MAP(KEY_WPS_BUTTON,		"wps"),
+	BH_MAP(KEY_VENDOR,		"vendor"),
 };
 
 /* -------------------------------------------------------------------------*/
@@ -107,7 +108,7 @@ static struct bh_map button_map[] = {
 static __printf(3, 4)
 int bh_event_add_var(struct bh_event *event, int argv, const char *format, ...)
 {
-	static char buf[128];
+	char buf[128];
 	char *s;
 	va_list args;
 	int len;
@@ -506,6 +507,13 @@ static int gpio_keys_button_probe(struct platform_device *pdev,
 			goto out;
 		}
 
+		if (button->irq) {
+			dev_err(dev, "skipping button %s (only gpio buttons supported)\n",
+				button->desc);
+			bdata->b = &pdata->buttons[i];
+			continue;
+		}
+
 		if (gpio_is_valid(button->gpio)) {
 			/* legacy platform data... but is it the lookup table? */
 			bdata->gpiod = devm_gpiod_get_index(dev, desc, i,
@@ -531,8 +539,9 @@ static int gpio_keys_button_probe(struct platform_device *pdev,
 			struct device_node *child =
 				of_get_next_child(dev->of_node, prev);
 
-			bdata->gpiod = devm_gpiod_get_from_of_node(dev,
-				child, "gpios", 0, GPIOD_IN, desc);
+			bdata->gpiod = devm_fwnode_gpiod_get(dev,
+				of_fwnode_handle(child), NULL, GPIOD_IN,
+				desc);
 
 			prev = child;
 		}

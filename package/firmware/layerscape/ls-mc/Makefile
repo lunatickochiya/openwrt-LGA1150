@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ls-mc
-PKG_VERSION:=LSDK-21.08
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=10.38.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NXP/qoriq-mc-binary.git
-PKG_SOURCE_VERSION:=LSDK-21.08
-PKG_MIRROR_HASH:=a8b2398f7958bfc3d45b239d33e0ecd27bd46e8f34693d545590a870be22ca2b
+PKG_SOURCE_VERSION:=mc_release_10.38.0
+PKG_MIRROR_HASH:=4bd0eab4b600d6dee67b4c5b32624a92fd84e6c93f506e46a4fe52217e2d1593
 
 PKG_FLAGS:=nonshared
 
@@ -32,11 +32,11 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR_IMAGE)
-	$(CP) $(PKG_BUILD_DIR)/ls1088a/mc_ls1088a_10.28.1.itb \
+	$(CP) $(PKG_BUILD_DIR)/ls1088a/mc_ls1088a_$(PKG_VERSION).itb \
 		$(STAGING_DIR_IMAGE)/fsl_ls1088a-rdb-mc.itb
-	$(CP) $(PKG_BUILD_DIR)/ls2088a/mc_ls2088a_10.28.1.itb \
+	$(CP) $(PKG_BUILD_DIR)/ls2088a/mc_ls2088a_$(PKG_VERSION).itb \
 		$(STAGING_DIR_IMAGE)/fsl_ls2088a-rdb-mc.itb
-	$(CP) $(PKG_BUILD_DIR)/lx216xa/mc_lx2160a_10.28.1.itb \
+	$(CP) $(PKG_BUILD_DIR)/lx216xa/mc_lx2160a_$(PKG_VERSION).itb \
 		$(STAGING_DIR_IMAGE)/fsl_lx2160a-rdb-mc.itb
 endef
 
